@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "UISdG5TUHZA=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\gregg\\Documents\\GitHub\\BalanceFlow\\src\\BalanceFlow.Application\\BalanceFlow.Application.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\gregg\\.nuget\\packages\\fluentvalidation\\11.11.0\\fluentvalidation.11.11.0.nupkg.sha512",
+    "C:\\Users\\gregg\\.nuget\\packages\\fluentvalidation.dependencyinjectionextensions\\11.11.0\\fluentvalidation.dependencyinjectionextensions.11.11.0.nupkg.sha512",
+    "C:\\Users\\gregg\\.nuget\\packages\\mediatr\\12.4.1\\mediatr.12.4.1.nupkg.sha512",
+    "C:\\Users\\gregg\\.nuget\\packages\\mediatr.contracts\\2.0.1\\mediatr.contracts.2.0.1.nupkg.sha512",
+    "C:\\Users\\gregg\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.2\\microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}

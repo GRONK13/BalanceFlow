@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "dLxbOu054mSUe7F7S4H9KRc+4p1NIe+sYQjfzd6ylhs=",
+  "Source": "BalanceFlow.Api",
+  "BasePath": "_content/BalanceFlow.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

@@ -1,0 +1,15 @@
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\bin\Debug\net9.0\BalanceFlow.Application.deps.json
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\bin\Debug\net9.0\BalanceFlow.Application.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\bin\Debug\net9.0\BalanceFlow.Application.pdb
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\bin\Debug\net9.0\BalanceFlow.Domain.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\bin\Debug\net9.0\BalanceFlow.Domain.pdb
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\BalanceFlow.Application.csproj.AssemblyReference.cache
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\BalanceFlow.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\BalanceFlow.Application.AssemblyInfoInputs.cache
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\BalanceFlow.Application.AssemblyInfo.cs
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\BalanceFlow.Application.csproj.CoreCompileInputs.cache
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\BalanceF.15CD6634.Up2Date
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\BalanceFlow.Application.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\refint\BalanceFlow.Application.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\BalanceFlow.Application.pdb
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\ref\BalanceFlow.Application.dll

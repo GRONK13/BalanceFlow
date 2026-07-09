@@ -1,0 +1,10 @@
+global using MediatR;
+global using FluentValidation;
+global using BalanceFlow.Domain.Common;
+global using BalanceFlow.Domain.Entities;
+global using BalanceFlow.Domain.Enums;
+global using BalanceFlow.Domain.Exceptions;
+global using BalanceFlow.Application.Common;
+global using BalanceFlow.Application.DTOs;
+global using BalanceFlow.Application.Interfaces;
+global using BalanceFlow.Application.Mappings;

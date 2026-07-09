@@ -1,0 +1,11 @@
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\bin\Debug\net9.0\BalanceFlow.Domain.deps.json
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\bin\Debug\net9.0\BalanceFlow.Domain.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\bin\Debug\net9.0\BalanceFlow.Domain.pdb
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\BalanceFlow.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\BalanceFlow.Domain.AssemblyInfoInputs.cache
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\BalanceFlow.Domain.AssemblyInfo.cs
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\BalanceFlow.Domain.csproj.CoreCompileInputs.cache
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\BalanceFlow.Domain.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\refint\BalanceFlow.Domain.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\BalanceFlow.Domain.pdb
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\ref\BalanceFlow.Domain.dll

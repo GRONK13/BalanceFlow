@@ -1,0 +1,9 @@
+global using Xunit;
+global using FluentAssertions;
+global using NSubstitute;
+global using BalanceFlow.Domain.Entities;
+global using BalanceFlow.Domain.Enums;
+global using BalanceFlow.Domain.Exceptions;
+global using BalanceFlow.Application.Common;
+global using BalanceFlow.Application.DTOs;
+global using BalanceFlow.Application.Interfaces;
