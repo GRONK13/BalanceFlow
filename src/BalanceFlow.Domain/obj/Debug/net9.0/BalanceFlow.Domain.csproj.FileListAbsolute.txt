@@ -9,3 +9,4 @@ C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\refint\BalanceFlow.Domain.dll
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\BalanceFlow.Domain.pdb
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\ref\BalanceFlow.Domain.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Domain\obj\Debug\net9.0\BalanceFlow.Domain.sourcelink.json

@@ -13,3 +13,4 @@ C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debu
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\refint\BalanceFlow.Application.dll
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\BalanceFlow.Application.pdb
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\ref\BalanceFlow.Application.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Application\obj\Debug\net9.0\BalanceFlow.Application.sourcelink.json

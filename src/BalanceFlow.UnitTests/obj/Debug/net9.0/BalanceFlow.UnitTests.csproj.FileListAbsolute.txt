@@ -116,3 +116,4 @@ C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.UnitTests\obj\Debug\
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.UnitTests\obj\Debug\net9.0\BalanceFlow.UnitTests.pdb
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.UnitTests\obj\Debug\net9.0\BalanceFlow.UnitTests.genruntimeconfig.cache
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.UnitTests\obj\Debug\net9.0\ref\BalanceFlow.UnitTests.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.UnitTests\obj\Debug\net9.0\BalanceFlow.UnitTests.sourcelink.json

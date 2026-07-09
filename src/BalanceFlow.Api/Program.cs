@@ -4,6 +4,7 @@ using BalanceFlow.Api.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -91,15 +92,11 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "BalanceFlow API v1");
-    });
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "BalanceFlow API v1");
+});
 
 // Exception handler MUST be configured before routing/controllers to catch all runtime exceptions
 app.UseExceptionHandler();
@@ -110,5 +107,37 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Run startup database DDL initialization and seed operations automatically
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<BalanceFlow.Infrastructure.Data.ApplicationDbContext>();
+    try
+    {
+        // Execute raw SQL to ensure the Users table exists over PgBouncer
+        await context.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""Users"" (
+                ""Id"" uuid NOT NULL,
+                ""Username"" character varying(50) NOT NULL,
+                ""PasswordHash"" character varying(250) NOT NULL,
+                ""Role"" character varying(20) NOT NULL,
+                ""IsActive"" boolean NOT NULL DEFAULT TRUE,
+                ""CreatedAt"" timestamp with time zone NOT NULL,
+                ""ModifiedAt"" timestamp with time zone,
+                ""IsDeleted"" boolean NOT NULL DEFAULT FALSE,
+                CONSTRAINT ""PK_Users"" PRIMARY KEY (""Id"")
+            );
+            
+            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_Users_Username"" ON ""Users"" (""Username"");
+        ");
+
+        await BalanceFlow.Infrastructure.Data.DatabaseSeeder.SeedAsync(context);
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred during database migration or seeding.");
+    }
+}
 
 app.Run();

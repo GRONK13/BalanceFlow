@@ -2,7 +2,18 @@
 
 import { useEffect, useState, Fragment } from "react";
 import ClientLayout from "../components/ClientLayout";
-import { api } from "../api";
+import { api, getToken } from "../api";
+import { 
+  Plus, 
+  Trash2, 
+  Scale, 
+  X, 
+  ChevronDown, 
+  ChevronUp, 
+  AlertCircle, 
+  Calendar,
+  FileSpreadsheet
+} from "lucide-react";
 
 interface JournalLineInput {
   accountId: string;
@@ -32,13 +43,14 @@ export default function JournalEntriesPage() {
   const [saving, setSaving] = useState(false);
 
   const loadData = async () => {
+    if (!getToken()) return;
     setLoading(true);
     setError(null);
     try {
       const entriesData = await api.journalEntries.getAll(1, 100);
       const accountsData = await api.accounts.getAll(1, 100);
       setEntries(entriesData.items);
-      setAccounts(accountsData.items);
+      setAccounts(accountsData.items.filter((a) => a.isActive));
     } catch (err: any) {
       setError(err.message || "Failed to load entries.");
     } finally {
@@ -54,11 +66,11 @@ export default function JournalEntriesPage() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  // Calculations for balanced double entry checks
+  // Calculations for balanced double entry checks (using epsilon math to prevent rounding errors)
   const totalDebits = lines.reduce((sum, l) => sum + (l.debitAmount || 0), 0);
   const totalCredits = lines.reduce((sum, l) => sum + (l.creditAmount || 0), 0);
   const difference = Math.abs(totalDebits - totalCredits);
-  const isBalanced = totalDebits === totalCredits && totalDebits > 0 && lines.every(l => l.accountId !== "");
+  const isBalanced = difference < 0.001 && totalDebits > 0 && lines.every(l => l.accountId !== "");
 
   const handleAddLine = () => {
     setLines([...lines, { accountId: "", debitAmount: 0, creditAmount: 0, description: "" }]);
@@ -93,7 +105,6 @@ export default function JournalEntriesPage() {
     setSaving(true);
     setError(null);
 
-    // Format lines to omit zero entries
     const formattedLines = lines.map((l) => ({
       accountId: l.accountId,
       debitAmount: l.debitAmount,
@@ -102,10 +113,7 @@ export default function JournalEntriesPage() {
     }));
 
     try {
-      // 1. Create the draft entry
       const entryResult = await api.journalEntries.create(refNum, date, desc, formattedLines);
-      
-      // 2. Post immediately to finalize it
       await api.journalEntries.post(entryResult.id);
 
       setShowModal(false);
@@ -116,7 +124,6 @@ export default function JournalEntriesPage() {
         { accountId: "", debitAmount: 0, creditAmount: 0, description: "" },
         { accountId: "", debitAmount: 0, creditAmount: 0, description: "" },
       ]);
-      // Refresh list
       loadData();
     } catch (err: any) {
       setError(err.message || "Failed to submit journal entry.");
@@ -127,39 +134,49 @@ export default function JournalEntriesPage() {
 
   return (
     <ClientLayout>
-      <div className="page-header">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
-          <h1 className="page-title">Ledger Journal Entries</h1>
-          <p className="page-subtitle">Draft and post balanced double-entry transactions to the ledger.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-text-main">Journal Entries Ledger</h1>
+          <p className="text-sm text-text-sub mt-1">Post balanced double-entry adjustments and cash transfers directly to the general ledger.</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn btn-primary">
-          ➕ New Posting
+        <button 
+          onClick={() => setShowModal(true)} 
+          className="flex items-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-brand/10"
+        >
+          <Plus className="h-4 w-4" />
+          <span>New Posting</span>
         </button>
       </div>
 
       {error && !showModal && (
-        <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#f87171", marginBottom: "20px" }}>
-          {error}
+        <div className="flex gap-2 items-center p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-sm mb-6">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <div className="leading-tight font-medium">{error}</div>
         </div>
       )}
 
-      <div className="content-card">
+      {/* Ledger Entries Registry Card */}
+      <div className="bg-bg-card border border-border-main rounded-2xl p-6 shadow-lg">
         {loading ? (
-          <div style={{ color: "#9ca3af", padding: "20px 0" }}>Loading ledger entries...</div>
+          <div className="flex justify-center items-center py-12 text-text-sub gap-3">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand border-t-transparent"></div>
+            <span className="text-sm">Loading ledger entries...</span>
+          </div>
         ) : entries.length === 0 ? (
-          <div style={{ color: "#4b5563", padding: "20px 0", textAlign: "center" }}>
-            No journal entries posted. Create a new entry posting above!
+          <div className="flex flex-col items-center justify-center py-12 text-text-sub gap-3">
+            <FileSpreadsheet className="h-10 w-10 text-text-sub/50" />
+            <span className="text-sm">No postings recorded. Click New Posting above to draft a ledger entry.</span>
           </div>
         ) : (
-          <div className="table-wrapper">
-            <table className="data-table">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr>
-                  <th style={{ width: "30px" }}></th>
-                  <th>Reference Number</th>
-                  <th>Posting Date</th>
-                  <th>Description / Memo</th>
-                  <th>Audit Status</th>
+                <tr className="border-b border-border-main">
+                  <th style={{ width: "40px" }}></th>
+                  <th className="pb-3 text-xs font-bold uppercase tracking-wider text-text-sub">Reference Number</th>
+                  <th className="pb-3 text-xs font-bold uppercase tracking-wider text-text-sub">Posting Date</th>
+                  <th className="pb-3 text-xs font-bold uppercase tracking-wider text-text-sub">Description</th>
+                  <th className="pb-3 text-xs font-bold uppercase tracking-wider text-text-sub text-right">Ledger Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -167,56 +184,84 @@ export default function JournalEntriesPage() {
                   const isExpanded = expandedId === entry.id;
                   return (
                     <Fragment key={entry.id}>
-                      <tr onClick={() => toggleExpand(entry.id)} style={{ cursor: "pointer" }}>
-                        <td style={{ fontWeight: "700" }}>{isExpanded ? "▼" : "▶"}</td>
-                        <td style={{ fontWeight: "700", fontFamily: "monospace" }}>{entry.referenceNumber}</td>
-                        <td>{new Date(entry.transactionDate).toLocaleDateString()}</td>
-                        <td>{entry.description || "—"}</td>
-                        <td>
-                          <span className={`badge ${entry.isPosted ? "approved" : "draft"}`}>
+                      <tr 
+                        onClick={() => toggleExpand(entry.id)} 
+                        className={`border-b border-border-main/40 hover:bg-bg-main/20 transition-all duration-150 cursor-pointer ${isExpanded ? "bg-bg-main/10" : ""}`}
+                      >
+                        <td className="py-4 text-center">
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4 text-brand inline" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-text-sub/60 inline" />
+                          )}
+                        </td>
+                        <td className="py-4 font-bold text-text-main font-mono text-xs tracking-wider">{entry.referenceNumber}</td>
+                        <td className="py-4 text-text-main">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 text-text-sub" />
+                            <span>{new Date(entry.transactionDate).toLocaleDateString()}</span>
+                          </span>
+                        </td>
+                        <td className="py-4 text-text-main font-semibold">{entry.description || "—"}</td>
+                        <td className="py-4 text-right">
+                          <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                            entry.isPosted 
+                              ? "bg-brand/10 border-brand/20 text-brand" 
+                              : "bg-bg-main border-border-main text-text-sub"
+                          }`}>
                             {entry.isPosted ? "Posted" : "Draft"}
                           </span>
                         </td>
                       </tr>
+                      
+                      {/* Expanded Posting Details Panel */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan={5} style={{ backgroundColor: "#0b0f19", padding: "20px" }}>
-                            <div style={{ borderLeft: "4px solid #3b82f6", paddingLeft: "16px" }}>
-                              <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#9ca3af", marginBottom: "12px" }}>Postings Lines Audit Log</h4>
-                              <table className="data-table" style={{ fontSize: "13px" }}>
+                          <td colSpan={5} className="bg-bg-main/80 border-b border-border-main/50 p-6">
+                            <div className="border-l-2 border-brand/60 pl-6 max-w-5xl">
+                              <h4 className="text-xs font-bold text-text-sub uppercase tracking-widest mb-4">
+                                Double-Entry Audit Logs
+                              </h4>
+                              <table className="w-full text-left text-xs border-collapse">
                                 <thead>
-                                  <tr>
-                                    <th>Ledger Account</th>
-                                    <th>Classification</th>
-                                    <th style={{ textAlign: "right" }}>Debit</th>
-                                    <th style={{ textAlign: "right" }}>Credit</th>
-                                    <th>Memo</th>
+                                  <tr className="border-b border-border-main/80">
+                                    <th className="pb-2 font-semibold text-text-sub/60">Ledger Account</th>
+                                    <th className="pb-2 font-semibold text-text-sub/60">Classification</th>
+                                    <th className="pb-2 font-semibold text-text-sub/60 text-right">Debit</th>
+                                    <th className="pb-2 font-semibold text-text-sub/60 text-right">Credit</th>
+                                    <th className="pb-2 font-semibold text-text-sub/60 pl-6">Memo</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {entry.lines.map((line: any) => (
-                                    <tr key={line.id}>
-                                      <td style={{ fontWeight: "600" }}>{line.accountCode} — {line.accountName}</td>
-                                      <td>
-                                        <span className={`badge ${line.accountType?.toLowerCase() || ""}`}>
+                                    <tr key={line.id} className="border-b border-border-main/20 hover:bg-bg-main/10">
+                                      <td className="py-3 font-semibold text-text-main">{line.accountCode} — {line.accountName}</td>
+                                      <td className="py-3">
+                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
+                                          line.accountType === "Asset" ? "bg-blue-500/10 border-blue-500/20 text-blue-500" :
+                                          line.accountType === "Liability" ? "bg-amber-500/10 border-amber-500/20 text-amber-500" :
+                                          line.accountType === "Equity" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" :
+                                          line.accountType === "Revenue" ? "bg-purple-500/10 border-purple-500/20 text-purple-500" :
+                                          "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                                        }`}>
                                           {line.accountType}
                                         </span>
                                       </td>
-                                      <td style={{ textAlign: "right", color: line.debitAmount > 0 ? "#60a5fa" : "#4b5563" }}>
+                                      <td className={`py-3 text-right font-mono font-medium ${line.debitAmount > 0 ? "text-brand" : "text-text-sub/50"}`}>
                                         {line.debitAmount > 0 ? `$${line.debitAmount.toFixed(2)}` : "—"}
                                       </td>
-                                      <td style={{ textAlign: "right", color: line.creditAmount > 0 ? "#34d399" : "#4b5563" }}>
+                                      <td className={`py-3 text-right font-mono font-medium ${line.creditAmount > 0 ? "text-emerald-500" : "text-text-sub/50"}`}>
                                         {line.creditAmount > 0 ? `$${line.creditAmount.toFixed(2)}` : "—"}
                                       </td>
-                                      <td style={{ color: "#9ca3af" }}>{line.description || "—"}</td>
+                                      <td className="py-3 text-text-sub pl-6 italic">{line.description || "—"}</td>
                                     </tr>
                                   ))}
-                                  <tr style={{ fontWeight: "700", borderTop: "2px solid #1f2937" }}>
-                                    <td colSpan={2}>Balanced Totals</td>
-                                    <td style={{ textAlign: "right", color: "#60a5fa" }}>${lines.reduce((s,l) => s, 0).toFixed(2) /* wait, display static sum of entry lines */}
+                                  <tr className="font-bold border-t border-border-main/80 bg-bg-main/20">
+                                    <td colSpan={2} className="py-3 text-text-sub">Total Sum (Balanced)</td>
+                                    <td className="py-3 text-right text-brand font-mono">
                                       ${entry.lines.reduce((sum: number, l: any) => sum + l.debitAmount, 0).toFixed(2)}
                                     </td>
-                                    <td style={{ textAlign: "right", color: "#34d399" }}>
+                                    <td className="py-3 text-right text-emerald-500 font-mono">
                                       ${entry.lines.reduce((sum: number, l: any) => sum + l.creditAmount, 0).toFixed(2)}
                                     </td>
                                     <td></td>
@@ -236,38 +281,50 @@ export default function JournalEntriesPage() {
         )}
       </div>
 
-      {/* Creation Modal */}
+      {/* Creation Modal Dialog */}
       {showModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0, 0, 0, 0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
-          <div style={{ width: "100%", maxWidth: "800px", padding: "32px", backgroundColor: "#111827", borderRadius: "12px", border: "1px solid #1f2937", maxHeight: "90vh", overflowY: "auto" }}>
-            <h3 style={{ fontSize: "20px", fontWeight: "600", color: "#fff", marginBottom: "20px" }}>Draft Double-Entry Transaction</h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="w-full max-w-[900px] bg-bg-card border border-border-main rounded-2xl p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button 
+              onClick={() => setShowModal(false)}
+              className="absolute top-6 right-6 text-text-sub hover:text-text-main transition-all duration-200 cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <h3 className="text-xl font-bold text-text-main mb-6">Draft Double-Entry Transaction</h3>
             
             {error && (
-              <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#f87171", fontSize: "14px", marginBottom: "20px" }}>
-                {error}
+              <div className="flex gap-2 items-center p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-sm mb-6">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <div className="leading-tight font-medium">{error}</div>
               </div>
             )}
 
-            <form onSubmit={handleCreate}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="ref">Reference Number</label>
+            <form onSubmit={handleCreate} className="flex flex-col gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-text-sub uppercase tracking-wider" htmlFor="ref">
+                    Reference Number
+                  </label>
                   <input
                     id="ref"
                     type="text"
-                    className="form-input"
-                    placeholder="e.g. JE-0012, ADJ-94"
+                    className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-sm outline-none focus:border-brand/60 placeholder:text-text-sub/30 transition-all duration-200"
+                    placeholder="e.g. JE-0012"
                     value={refNum}
                     onChange={(e) => setRefNum(e.target.value)}
                     required
                   />
                 </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="date">Transaction Date</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-text-sub uppercase tracking-wider" htmlFor="date">
+                    Transaction Date
+                  </label>
                   <input
                     id="date"
                     type="date"
-                    className="form-input"
+                    className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-sm outline-none focus:border-brand/60 transition-all duration-200"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     required
@@ -275,131 +332,143 @@ export default function JournalEntriesPage() {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="desc">Memo / Header Narrative</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-sub uppercase tracking-wider" htmlFor="desc">
+                  Header Memo / Narration
+                </label>
                 <input
                   id="desc"
                   type="text"
-                  className="form-input"
-                  placeholder="Summarize transaction purposes"
+                  className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-sm outline-none focus:border-brand/60 placeholder:text-text-sub/30 transition-all duration-200"
+                  placeholder="e.g. Adjust office supplies expense accrual"
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
                   required
                 />
               </div>
 
-              <div style={{ marginTop: "24px" }}>
-                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#9ca3af", marginBottom: "12px" }}>Postings Ledger Lines</h4>
+              <div className="mt-4">
+                <h4 className="text-xs font-bold text-text-sub uppercase tracking-widest mb-4">
+                  Ledger Postings Rows
+                </h4>
                 
-                {lines.map((line, index) => (
-                  <div key={index} style={{ display: "flex", gap: "12px", marginBottom: "12px", alignItems: "center" }}>
-                    <div style={{ flex: 2 }}>
-                      <select
-                        className="form-input"
-                        value={line.accountId}
-                        onChange={(e) => handleLineChange(index, "accountId", e.target.value)}
-                        required
-                        style={{ cursor: "pointer" }}
+                <div className="flex flex-col gap-3">
+                  {lines.map((line, index) => (
+                    <div key={index} className="flex gap-3 items-center">
+                      <div className="flex-[3] relative">
+                        <select
+                          className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-xs outline-none focus:border-brand/60 transition-all duration-200 cursor-pointer appearance-none animate-none"
+                          value={line.accountId}
+                          onChange={(e) => handleLineChange(index, "accountId", e.target.value)}
+                          required
+                        >
+                          <option value="">Select Ledger Account...</option>
+                          {accounts.map((acc) => (
+                            <option key={acc.id} value={acc.id}>
+                              {acc.accountCode} — {acc.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-sub text-xs">
+                          ▼
+                        </div>
+                      </div>
+
+                      <div className="flex-[1.5]">
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-xs outline-none focus:border-brand/60 text-right disabled:opacity-30 placeholder:text-text-sub/30"
+                          placeholder="Debit ($)"
+                          value={line.debitAmount || ""}
+                          onChange={(e) => handleLineChange(index, "debitAmount", e.target.value)}
+                          disabled={line.creditAmount > 0}
+                        />
+                      </div>
+
+                      <div className="flex-[1.5]">
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-xs outline-none focus:border-brand/60 text-right disabled:opacity-30 placeholder:text-text-sub/30"
+                          placeholder="Credit ($)"
+                          value={line.creditAmount || ""}
+                          onChange={(e) => handleLineChange(index, "creditAmount", e.target.value)}
+                          disabled={line.debitAmount > 0}
+                        />
+                      </div>
+
+                      <div className="flex-[3]">
+                        <input
+                          type="text"
+                          className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-xs outline-none focus:border-brand/60 placeholder:text-text-sub/30"
+                          placeholder="Line description..."
+                          value={line.description}
+                          onChange={(e) => handleLineChange(index, "description", e.target.value)}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLine(index)}
+                        className="text-rose-500 hover:text-rose-400 p-2 cursor-pointer disabled:opacity-20"
+                        disabled={lines.length <= 2}
                       >
-                        <option value="">Select Ledger Account...</option>
-                        {accounts.map((acc) => (
-                          <option key={acc.id} value={acc.id}>
-                            {acc.accountCode} — {acc.name}
-                          </option>
-                        ))}
-                      </select>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-
-                    <div style={{ flex: 1 }}>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className="form-input"
-                        placeholder="Debit ($)"
-                        value={line.debitAmount || ""}
-                        onChange={(e) => handleLineChange(index, "debitAmount", e.target.value)}
-                        disabled={line.creditAmount > 0}
-                        style={{ textAlign: "right" }}
-                      />
-                    </div>
-
-                    <div style={{ flex: 1 }}>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className="form-input"
-                        placeholder="Credit ($)"
-                        value={line.creditAmount || ""}
-                        onChange={(e) => handleLineChange(index, "creditAmount", e.target.value)}
-                        disabled={line.debitAmount > 0}
-                        style={{ textAlign: "right" }}
-                      />
-                    </div>
-
-                    <div style={{ flex: 2 }}>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Line memo..."
-                        value={line.description}
-                        onChange={(e) => handleLineChange(index, "description", e.target.value)}
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveLine(index)}
-                      style={{ background: "none", border: "none", color: "#ef4444", fontSize: "18px", cursor: "pointer", padding: "0 8px" }}
-                      disabled={lines.length <= 2}
-                    >
-                      ❌
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
 
                 <button
                   type="button"
                   onClick={handleAddLine}
-                  className="btn btn-secondary"
-                  style={{ padding: "6px 12px", fontSize: "12px", marginTop: "8px" }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-main border border-border-main text-text-main hover:bg-bg-main/60 text-xs font-semibold rounded-lg transition-all duration-200 mt-4 cursor-pointer"
                 >
-                  ➕ Add Ledger Row
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Add Ledger Row</span>
                 </button>
               </div>
 
-              {/* Real-time Validation Check Banner */}
-              <div
-                style={{
-                  marginTop: "24px",
-                  padding: "16px",
-                  borderRadius: "8px",
-                  backgroundColor: isBalanced ? "rgba(16, 185, 129, 0.05)" : "rgba(239, 68, 68, 0.05)",
-                  border: `1px solid ${isBalanced ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"}`,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "14px",
-                }}
-              >
-                <div>
-                  <div style={{ color: "#9ca3af" }}>Total Debits: <strong style={{ color: "#60a5fa" }}>${totalDebits.toFixed(2)}</strong></div>
-                  <div style={{ color: "#9ca3af" }}>Total Credits: <strong style={{ color: "#34d399" }}>${totalCredits.toFixed(2)}</strong></div>
+              {/* Real-time Balanced State Panel (shadcn style Alert) */}
+              <div className={`mt-6 p-4 rounded-xl border flex items-center justify-between gap-4 text-xs font-semibold ${
+                isBalanced 
+                  ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-500" 
+                  : "bg-rose-500/5 border-rose-500/20 text-rose-500"
+              }`}>
+                <div className="flex gap-4">
+                  <div>Debits: <strong className="font-mono text-sm text-brand">${totalDebits.toFixed(2)}</strong></div>
+                  <div>Credits: <strong className="font-mono text-sm text-emerald-500">${totalCredits.toFixed(2)}</strong></div>
                 </div>
-                <div style={{ textAlign: "right", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div className="flex items-center gap-1.5">
                   {isBalanced ? (
-                    <span style={{ color: "#34d399", fontWeight: "700" }}>✓ Ledger Balanced</span>
+                    <>
+                      <Scale className="h-4 w-4 text-emerald-500" />
+                      <span>Ledger Balanced</span>
+                    </>
                   ) : (
-                    <span style={{ color: "#f87171", fontWeight: "700" }}>
-                      ⚠️ Out of Balance by ${difference.toFixed(2)}
-                    </span>
+                    <>
+                      <AlertCircle className="h-4 w-4 text-rose-500" />
+                      <span>Out of Balance by ${difference.toFixed(2)}</span>
+                    </>
                   )}
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "24px" }}>
-                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary" disabled={saving}>
+              <div className="flex gap-3 justify-end mt-6">
+                <button 
+                  type="button" 
+                  onClick={() => setShowModal(false)} 
+                  className="px-4 py-2.5 bg-bg-main border border-border-main text-text-main hover:bg-bg-main/60 text-xs font-semibold rounded-xl transition-all duration-200 cursor-pointer"
+                  disabled={saving}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={saving || !isBalanced}>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2.5 bg-brand hover:bg-brand-hover text-white text-xs font-semibold rounded-xl transition-all duration-200 cursor-pointer disabled:opacity-50"
+                  disabled={saving || !isBalanced}
+                >
                   {saving ? "Posting..." : "Post to Ledger"}
                 </button>
               </div>

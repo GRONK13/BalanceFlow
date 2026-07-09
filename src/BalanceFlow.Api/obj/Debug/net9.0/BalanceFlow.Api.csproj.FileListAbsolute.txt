@@ -140,3 +140,4 @@ C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Api\bin\Debug\net9.0
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Api\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Api\obj\Debug\net9.0\BalanceFlow.Api.sourcelink.json

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import ClientLayout from "../components/ClientLayout";
-import { api } from "../api";
+import { api, getToken } from "../api";
+import { Plus, X, Search, AlertCircle, CheckCircle2, Circle } from "lucide-react";
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -18,6 +19,7 @@ export default function AccountsPage() {
   const [saving, setSaving] = useState(false);
 
   const loadAccounts = async () => {
+    if (!getToken()) return;
     setLoading(true);
     setError(null);
     try {
@@ -63,57 +65,86 @@ export default function AccountsPage() {
 
   return (
     <ClientLayout>
-      <div className="page-header">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
-          <h1 className="page-title">Chart of Accounts</h1>
-          <p className="page-subtitle">Add and configure ledger accounts to categorize transactions.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-text-main">Chart of Accounts</h1>
+          <p className="text-sm text-text-sub mt-1">Manage and configure general ledger accounts to categorize transactions.</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn btn-primary">
-          ➕ Create Account
+        <button 
+          onClick={() => setShowModal(true)} 
+          className="flex items-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-semibold rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-brand/10"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Create Account</span>
         </button>
       </div>
 
       {error && !showModal && (
-        <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#f87171", marginBottom: "20px" }}>
-          {error}
+        <div className="flex gap-2 items-center p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-sm mb-6">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <div className="leading-tight font-medium">{error}</div>
         </div>
       )}
 
-      <div className="content-card">
+      <div className="bg-bg-card border border-border-main rounded-2xl p-6 shadow-lg">
         {loading ? (
-          <div style={{ color: "#9ca3af", padding: "20px 0" }}>Loading ledger chart...</div>
+          <div className="flex justify-center items-center py-12 text-text-sub gap-3">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand border-t-transparent"></div>
+            <span className="text-sm">Loading ledger chart...</span>
+          </div>
         ) : accounts.length === 0 ? (
-          <div style={{ color: "#4b5563", padding: "20px 0", textAlign: "center" }}>
-            No accounts found. Create your first ledger account above!
+          <div className="flex flex-col items-center justify-center py-12 text-text-sub gap-3">
+            <Search className="h-10 w-10 text-text-sub/50" />
+            <span className="text-sm">No ledger accounts registered yet. Click Create Account above to begin.</span>
           </div>
         ) : (
-          <div className="table-wrapper">
-            <table className="data-table">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr>
-                  <th>Account Code</th>
-                  <th>Account Name</th>
-                  <th>Classification</th>
-                  <th>Status</th>
-                  <th>Description</th>
+                <tr className="border-b border-border-main">
+                  <th className="pb-3 text-xs font-bold uppercase tracking-wider text-text-sub">Account Code</th>
+                  <th className="pb-3 text-xs font-bold uppercase tracking-wider text-text-sub">Account Name</th>
+                  <th className="pb-3 text-xs font-bold uppercase tracking-wider text-text-sub">Classification</th>
+                  <th className="pb-3 text-xs font-bold uppercase tracking-wider text-text-sub">Status</th>
+                  <th className="pb-3 text-xs font-bold uppercase tracking-wider text-text-sub">Description</th>
                 </tr>
               </thead>
               <tbody>
                 {accounts.map((acc) => (
-                  <tr key={acc.id}>
-                    <td style={{ fontWeight: "700", fontFamily: "monospace" }}>{acc.accountCode}</td>
-                    <td>{acc.name}</td>
-                    <td>
-                      <span className={`badge ${getAccountTypeLabel(acc.type).toLowerCase()}`}>
+                  <tr key={acc.id} className="border-b border-border-main/40 hover:bg-bg-main/20 transition-all duration-150">
+                    <td className="py-4 font-bold text-text-main font-mono text-xs tracking-wider">{acc.accountCode}</td>
+                    <td className="py-4 text-text-main font-semibold">{acc.name}</td>
+                    <td className="py-4">
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                        acc.type === 0 ? "bg-blue-500/10 border-blue-500/20 text-blue-500" :
+                        acc.type === 1 ? "bg-amber-500/10 border-amber-500/20 text-amber-500" :
+                        acc.type === 2 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" :
+                        acc.type === 3 ? "bg-purple-500/10 border-purple-500/20 text-purple-500" :
+                        "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                      }`}>
                         {getAccountTypeLabel(acc.type)}
                       </span>
                     </td>
-                    <td>
-                      <span className={`badge ${acc.isActive ? "approved" : "rejected"}`}>
-                        {acc.isActive ? "Active" : "Inactive"}
+                    <td className="py-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                        acc.isActive
+                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                          : "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                      }`}>
+                        {acc.isActive ? (
+                          <>
+                            <CheckCircle2 className="h-3 w-3" />
+                            <span>Active</span>
+                          </>
+                        ) : (
+                          <>
+                            <Circle className="h-3 w-3" />
+                            <span>Inactive</span>
+                          </>
+                        )}
                       </span>
                     </td>
-                    <td style={{ color: "#9ca3af" }}>{acc.description || "—"}</td>
+                    <td className="py-4 text-text-sub text-xs italic">{acc.description || "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -122,25 +153,35 @@ export default function AccountsPage() {
         )}
       </div>
 
-      {/* Creation Modal */}
+      {/* Creation Modal (shadcn/ui style Dialog) */}
       {showModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0, 0, 0, 0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
-          <div style={{ width: "100%", maxWidth: "500px", padding: "32px", backgroundColor: "#111827", borderRadius: "12px", border: "1px solid #1f2937" }}>
-            <h3 style={{ fontSize: "20px", fontWeight: "600", color: "#fff", marginBottom: "20px" }}>Create Ledger Account</h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="w-full max-w-[500px] bg-bg-card border border-border-main rounded-2xl p-8 shadow-2xl relative">
+            <button 
+              onClick={() => setShowModal(false)}
+              className="absolute top-6 right-6 text-text-sub hover:text-text-main transition-all duration-200 cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <h3 className="text-xl font-bold text-text-main mb-6">Create Ledger Account</h3>
             
             {error && (
-              <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#f87171", fontSize: "14px", marginBottom: "20px" }}>
-                {error}
+              <div className="flex gap-2 items-center p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-sm mb-6">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <div className="leading-tight font-medium">{error}</div>
               </div>
             )}
 
-            <form onSubmit={handleCreate}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="code">Account Code (Unique)</label>
+            <form onSubmit={handleCreate} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-sub uppercase tracking-wider" htmlFor="code">
+                  Account Code (Unique)
+                </label>
                 <input
                   id="code"
                   type="text"
-                  className="form-input"
+                  className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-sm outline-none focus:border-brand/60 placeholder:text-text-sub/30 transition-all duration-200"
                   placeholder="e.g. 1010, 2100"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
@@ -148,52 +189,71 @@ export default function AccountsPage() {
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="name">Account Name</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-sub uppercase tracking-wider" htmlFor="name">
+                  Account Name
+                </label>
                 <input
                   id="name"
                   type="text"
-                  className="form-input"
-                  placeholder="e.g. Cash in Hand, Rent Expense"
+                  className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-sm outline-none focus:border-brand/60 placeholder:text-text-sub/30 transition-all duration-200"
+                  placeholder="e.g. Cash in Hand, Server Expenses"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="type">Classification</label>
-                <select
-                  id="type"
-                  className="form-input"
-                  value={type}
-                  onChange={(e) => setType(parseInt(e.target.value))}
-                >
-                  <option value={0}>Asset (Cash, Receivables)</option>
-                  <option value={1}>Liability (Payables, Loans)</option>
-                  <option value={2}>Equity (Retained Earnings, Capital)</option>
-                  <option value={3}>Revenue (Sales, Service Fees)</option>
-                  <option value={4}>Expense (Rent, Supplies, Taxes)</option>
-                </select>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-sub uppercase tracking-wider" htmlFor="type">
+                  Classification
+                </label>
+                <div className="relative">
+                  <select
+                    id="type"
+                    className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-sm outline-none focus:border-brand/60 transition-all duration-200 cursor-pointer appearance-none"
+                    value={type}
+                    onChange={(e) => setType(parseInt(e.target.value))}
+                  >
+                    <option value={0}>Asset (Cash, Receivables)</option>
+                    <option value={1}>Liability (Payables, Loans)</option>
+                    <option value={2}>Equity (Retained Earnings, Capital)</option>
+                    <option value={3}>Revenue (Sales, Service Fees)</option>
+                    <option value={4}>Expense (Rent, Supplies, Taxes)</option>
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-sub text-xs">
+                    ▼
+                  </div>
+                </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="desc">Description (Optional)</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-text-sub uppercase tracking-wider" htmlFor="desc">
+                  Description
+                </label>
                 <textarea
                   id="desc"
-                  className="form-input"
-                  placeholder="Memo detailing account utilization rules"
+                  className="w-full px-4 py-3 bg-bg-main border border-border-main rounded-xl text-text-main text-sm outline-none focus:border-brand/60 placeholder:text-text-sub/30 transition-all duration-200 min-h-[90px] resize-vertical"
+                  placeholder="Detail ledger utilization guidelines"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  style={{ minHeight: "80px", resize: "vertical" }}
                 />
               </div>
 
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "24px" }}>
-                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary" disabled={saving}>
+              <div className="flex gap-3 justify-end mt-6">
+                <button 
+                  type="button" 
+                  onClick={() => setShowModal(false)} 
+                  className="px-4 py-2.5 bg-bg-main border border-border-main text-text-main hover:bg-bg-main/60 text-xs font-semibold rounded-xl transition-all duration-200 cursor-pointer"
+                  disabled={saving}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2.5 bg-brand hover:bg-brand-hover text-white text-xs font-semibold rounded-xl transition-all duration-200 cursor-pointer disabled:opacity-50"
+                  disabled={saving}
+                >
                   {saving ? "Saving..." : "Create Account"}
                 </button>
               </div>

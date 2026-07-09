@@ -23,10 +23,32 @@ export function clearToken() {
 
 export function getSessionUser(): { username: string; role: string } | null {
   if (typeof window !== "undefined") {
-    const username = localStorage.getItem("bf_username");
-    const role = localStorage.getItem("bf_role");
-    if (username && role) {
+    const token = getToken();
+    if (!token) return null;
+
+    try {
+      const parts = token.split(".");
+      if (parts.length !== 3) return null;
+
+      // Decode base64url payload securely using atob
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+
+      const payload = JSON.parse(jsonPayload);
+      
+      // Map standard claims (Sub or Name claim for username, role claim for Role)
+      const username = payload.unique_name || payload.sub || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "User";
+      const role = payload.role || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "Guest";
+
       return { username, role };
+    } catch (e) {
+      return null;
     }
   }
   return null;
@@ -57,11 +79,21 @@ async function request<T>(
     return {} as T;
   }
 
-  const data = await response.json();
+  let data: any = null;
+  const contentType = response.headers.get("content-type");
+  
+  if (contentType && contentType.includes("application/json")) {
+    try {
+      data = await response.json();
+    } catch {
+      // Body was empty or invalid JSON
+    }
+  }
 
   if (!response.ok) {
-    // Return validation or domain exception logs if available
-    const errorDetails = data.errors || [data.detail || data.title || "An error occurred"];
+    const errorDetails = data?.errors || [
+      data?.detail || data?.title || `HTTP Error ${response.status}: ${response.statusText}`
+    ];
     throw new Error(errorDetails.join(" | "));
   }
 
@@ -70,14 +102,12 @@ async function request<T>(
 
 export const api = {
   auth: {
-    async login(username: string, role: string): Promise<string> {
-      const response = await request<{ token: string }>("/auth/token", {
+    async login(username: string, password: string): Promise<string> {
+      const response = await request<{ token: string }>("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ username, role }),
+        body: JSON.stringify({ username, password }),
       });
       setToken(response.token);
-      localStorage.setItem("bf_username", username);
-      localStorage.setItem("bf_role", role);
       return response.token;
     },
   },

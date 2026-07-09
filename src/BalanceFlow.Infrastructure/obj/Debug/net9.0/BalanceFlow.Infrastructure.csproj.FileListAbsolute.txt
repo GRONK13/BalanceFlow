@@ -17,3 +17,4 @@ C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Infrastructure\obj\D
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Infrastructure\obj\Debug\net9.0\BalanceFlow.Infrastructure.pdb
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Infrastructure\obj\Debug\net9.0\BalanceFlow.Infrastructure.genruntimeconfig.cache
 C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Infrastructure\obj\Debug\net9.0\ref\BalanceFlow.Infrastructure.dll
+C:\Users\gregg\Documents\GitHub\BalanceFlow\src\BalanceFlow.Infrastructure\obj\Debug\net9.0\BalanceFlow.Infrastructure.sourcelink.json

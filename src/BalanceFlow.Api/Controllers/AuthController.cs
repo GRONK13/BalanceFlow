@@ -1,65 +1,75 @@
+using BalanceFlow.Infrastructure.Data;
+using BalanceFlow.Infrastructure.Security;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
 
 namespace BalanceFlow.Api.Controllers;
 
 /// <summary>
-/// Public authentication controller allowing developers and reviewers to quickly generate
-/// mock JWT Bearer tokens to test the API's role-based access restrictions.
+/// Core authentication controller handling user verification and secure JWT token creation.
 /// </summary>
 [ApiController]
 [Route("api/auth")]
 public sealed class AuthController : ControllerBase
 {
+    private readonly ApplicationDbContext _dbContext;
     private readonly IConfiguration _configuration;
 
-    public AuthController(IConfiguration configuration)
+    public AuthController(ApplicationDbContext dbContext, IConfiguration configuration)
     {
+        _dbContext = dbContext;
         _configuration = configuration;
     }
 
-    [HttpPost("token")]
+    /// <summary>
+    /// Authenticates user credentials against the PostgreSQL database using PBKDF2 cryptography.
+    /// Returns a signed JWT token on success.
+    /// </summary>
+    [HttpPost("login")]
     [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public IActionResult GenerateToken([FromBody] TokenRequest request)
+    [ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        // 1. Validation
-        if (string.IsNullOrWhiteSpace(request.Username))
+        if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
         {
-            return BadRequest("Username is required.");
+            return BadRequest("Username and password are required.");
         }
 
-        var allowedRoles = new[] { "Accountant", "Auditor", "Admin" };
-        if (!allowedRoles.Contains(request.Role, StringComparer.OrdinalIgnoreCase))
+        var user = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Username.ToLower() == request.Username.ToLower() && !u.IsDeleted);
+
+        if (user == null || !user.IsActive || !PasswordHasher.VerifyPassword(request.Password, user.PasswordHash))
         {
-            return BadRequest("Invalid role. Must be 'Accountant', 'Auditor', or 'Admin'.");
+            return Unauthorized("Invalid username or password.");
         }
 
-        // 2. Load signing configurations
-        var secret = _configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret not configured.");
+        // Load JWT configurations
+        var secret = _configuration["Jwt:Secret"] ?? "SuperSecretSecuritySigningKeyForBalanceFlowApplicationSystemAuditServiceService2026";
         var issuer = _configuration["Jwt:Issuer"] ?? "BalanceFlowIdentityServer";
         var audience = _configuration["Jwt:Audience"] ?? "BalanceFlowApi";
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        // 3. Populate Claims
+        // Populate claims with DB data
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, request.Username),
+            new(JwtRegisteredClaimNames.Sub, user.Username),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(ClaimTypes.Name, request.Username),
-            new(ClaimTypes.Role, request.Role) // Injected role claim checked by [Authorize(Roles = "...")]
+            new(ClaimTypes.Name, user.Username),
+            new(ClaimTypes.Role, user.Role) // Role is loaded dynamically from database record!
         };
 
-        // 4. Generate token options
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
+            expires: DateTime.UtcNow.AddHours(4),
             signingCredentials: credentials);
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
@@ -68,5 +78,5 @@ public sealed class AuthController : ControllerBase
     }
 }
 
-public sealed record TokenRequest(string Username, string Role);
+public sealed record LoginRequest(string Username, string Password);
 public sealed record TokenResponse(string Token);

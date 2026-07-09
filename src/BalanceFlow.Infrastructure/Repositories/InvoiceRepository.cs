@@ -17,6 +17,7 @@ public sealed class InvoiceRepository : IInvoiceRepository
         return await _dbContext.Invoices
             .Include(i => i.LineItems)
                 .ThenInclude(l => l.Account)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
     }
 
@@ -28,6 +29,7 @@ public sealed class InvoiceRepository : IInvoiceRepository
         return await _dbContext.Invoices
             .Include(i => i.LineItems)
                 .ThenInclude(l => l.Account)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(
                 i => i.InvoiceNumber.ToLower() == invoiceNumber.ToLower() &&
                      i.VendorName.ToLower() == vendorName.ToLower(),
@@ -40,6 +42,7 @@ public sealed class InvoiceRepository : IInvoiceRepository
         var query = _dbContext.Invoices
             .Include(i => i.LineItems)
                 .ThenInclude(l => l.Account)
+            .AsSplitQuery()
             .AsNoTracking();
 
         var totalCount = await query.CountAsync(cancellationToken);

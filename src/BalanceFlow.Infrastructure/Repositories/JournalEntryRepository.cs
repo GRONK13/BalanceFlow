@@ -18,6 +18,7 @@ public sealed class JournalEntryRepository : IJournalEntryRepository
         return await _dbContext.JournalEntries
             .Include(j => j.Lines)
                 .ThenInclude(l => l.Account)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(j => j.Id == id, cancellationToken);
     }
 
@@ -27,6 +28,7 @@ public sealed class JournalEntryRepository : IJournalEntryRepository
         var query = _dbContext.JournalEntries
             .Include(j => j.Lines)
                 .ThenInclude(l => l.Account)
+            .AsSplitQuery()
             .AsNoTracking();
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -45,6 +47,7 @@ public sealed class JournalEntryRepository : IJournalEntryRepository
         return await _dbContext.JournalEntries
             .Include(j => j.Lines)
                 .ThenInclude(l => l.Account)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(j => j.ReferenceNumber == referenceNumber, cancellationToken);
     }
 
