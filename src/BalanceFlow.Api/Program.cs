@@ -10,6 +10,30 @@ using System.Text;
 // Enable legacy timestamp behavior in Npgsql to prevent UTC timezone mismatch exceptions
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
+// Load local .env file if it exists to populate Environment Variables (for local development)
+var currentDir = Directory.GetCurrentDirectory();
+var envFilePath = Path.Combine(currentDir, ".env");
+if (!File.Exists(envFilePath))
+{
+    envFilePath = Path.Combine(Directory.GetParent(currentDir)?.FullName ?? "", ".env");
+}
+
+if (File.Exists(envFilePath))
+{
+    foreach (var line in File.ReadAllLines(envFilePath))
+    {
+        if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#')) continue;
+        
+        var separatorIndex = line.IndexOf('=');
+        if (separatorIndex > 0)
+        {
+            var key = line.Substring(0, separatorIndex).Trim();
+            var val = line.Substring(separatorIndex + 1).Trim().Trim('"').Trim('\'');
+            Environment.SetEnvironmentVariable(key, val);
+        }
+    }
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services from other layers
