@@ -111,6 +111,110 @@ export default function DashboardPage() {
   const isEquationBalanced = discrepancy < 0.01;
   const complianceScore = isEquationBalanced ? 100 : Math.max(0, 100 - Math.round((discrepancy / (stats.totalAssets || 1)) * 100));
 
+  if (loading) {
+    return (
+      <ClientLayout>
+        {/* Header Skeleton */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 animate-pulse">
+          <div>
+            <div className="h-8 w-64 bg-border-main/50 rounded-lg"></div>
+            <div className="h-4 w-96 bg-border-main/30 rounded-lg mt-2"></div>
+          </div>
+        </div>
+
+        {/* 3 Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-bg-card border border-border-main rounded-2xl p-6 shadow-lg shadow-text-main/5 animate-pulse flex flex-col justify-between h-36">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <div className="h-3 w-20 bg-border-main/40 rounded"></div>
+                  <div className="h-8 w-36 bg-border-main/60 rounded-md"></div>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-border-main/30"></div>
+              </div>
+              <div className="h-3 w-48 bg-border-main/20 rounded"></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Equation Banner Skeleton */}
+        <div className="bg-bg-card/60 border border-border-main rounded-2xl p-6 flex flex-col md:flex-row items-center justify-around gap-6 mb-8 shadow-sm animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <div className="h-3 w-24 bg-border-main/30 rounded"></div>
+              <div className="h-6 w-32 bg-border-main/50 rounded"></div>
+            </div>
+          ))}
+          <div className="h-8 w-48 bg-border-main/40 rounded-full"></div>
+        </div>
+
+        {/* Chart and Health Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          {/* Chart Skeleton */}
+          <div className="lg:col-span-2 bg-bg-card border border-border-main rounded-2xl p-6 shadow-lg h-80 flex flex-col justify-between animate-pulse">
+            <div className="flex justify-between mb-4">
+              <div className="space-y-2">
+                <div className="h-4 w-48 bg-border-main/40 rounded"></div>
+                <div className="h-3 w-64 bg-border-main/20 rounded"></div>
+              </div>
+              <div className="flex gap-2">
+                <div className="h-6 w-16 bg-border-main/30 rounded"></div>
+                <div className="h-6 w-16 bg-border-main/30 rounded"></div>
+              </div>
+            </div>
+            <div className="h-40 bg-border-main/10 rounded-xl border border-border-main/20 flex items-center justify-center">
+              <div className="text-xs text-text-sub/30 uppercase tracking-widest font-semibold">Loading data visualizations...</div>
+            </div>
+            <div className="flex justify-between">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-3 w-8 bg-border-main/20 rounded"></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Health Check Skeleton */}
+          <div className="bg-bg-card border border-border-main rounded-2xl p-6 shadow-lg h-80 flex flex-col justify-between animate-pulse">
+            <div>
+              <div className="h-4 w-36 bg-border-main/40 rounded"></div>
+              <div className="h-3 w-48 bg-border-main/20 rounded mt-2"></div>
+            </div>
+            <div className="flex justify-center items-center my-4">
+              <div className="h-28 w-28 rounded-full border-[8px] border-border-main/20 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-border-main/30"></div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-3 w-full bg-border-main/30 rounded"></div>
+              <div className="h-3 w-full bg-border-main/30 rounded"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Tables Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {[1, 2].map((tableIndex) => (
+            <div key={tableIndex} className="bg-bg-card border border-border-main rounded-2xl p-6 shadow-lg animate-pulse">
+              <div className="flex justify-between items-center mb-6">
+                <div className="h-4 w-40 bg-border-main/40 rounded"></div>
+                <div className="h-3 w-20 bg-border-main/30 rounded"></div>
+              </div>
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((rowIndex) => (
+                  <div key={rowIndex} className="flex justify-between items-center border-b border-border-main/30 pb-3">
+                    <div className="h-4 w-28 bg-border-main/30 rounded"></div>
+                    <div className="h-4 w-20 bg-border-main/20 rounded"></div>
+                    <div className="h-5 w-16 bg-border-main/40 rounded-full"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </ClientLayout>
+    );
+  }
+
   const monthLabels = getMonthLabels();
 
   return (
