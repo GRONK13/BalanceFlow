@@ -11,33 +11,51 @@ import {
   ArrowUpRight, 
   ClipboardCheck, 
   AlertCircle,
-  Activity
+  Activity,
+  CheckCircle2
 } from "lucide-react";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
+    totalAssets: 0,
+    totalLiabilities: 0,
+    totalEquity: 0,
     accountsCount: 0,
     journalEntriesCount: 0,
     invoicesCount: 0,
     recentEntries: [] as any[],
-    recentInvoices: [] as any[]
+    recentInvoices: [] as any[],
+    assetTrend: [0, 0, 0, 0, 0, 0] as number[],
+    equityTrend: [0, 0, 0, 0, 0, 0] as number[]
   });
   const [loading, setLoading] = useState(true);
+
+  const getMonthLabels = () => {
+    const labels = [];
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      labels.push(d.toLocaleString("default", { month: "short" }));
+    }
+    return labels;
+  };
 
   useEffect(() => {
     async function loadDashboardData() {
       if (!getToken()) return;
       try {
-        const accountsData = await api.accounts.getAll(1, 5);
-        const entriesData = await api.journalEntries.getAll(1, 5);
-        const invoicesData = await api.invoices.getAll(1, 5);
-
+        const data = await api.dashboard.getSummary();
         setStats({
-          accountsCount: accountsData.totalCount,
-          journalEntriesCount: entriesData.totalCount,
-          invoicesCount: invoicesData.totalCount,
-          recentEntries: entriesData.items,
-          recentInvoices: invoicesData.items
+          totalAssets: data.totalAssets,
+          totalLiabilities: data.totalLiabilities,
+          totalEquity: data.totalEquity,
+          accountsCount: data.accountsCount,
+          journalEntriesCount: data.journalEntriesCount,
+          invoicesCount: data.invoicesCount,
+          recentEntries: data.recentEntries,
+          recentInvoices: data.recentInvoices,
+          assetTrend: data.assetTrend,
+          equityTrend: data.equityTrend
         });
       } catch (err) {
         console.error("Failed to load dashboard statistics:", err);
@@ -48,6 +66,52 @@ export default function DashboardPage() {
 
     loadDashboardData();
   }, []);
+
+  // Helper to convert trend array to SVG coordinate path
+  const getSvgPath = (trend: number[]) => {
+    if (!trend || trend.length === 0) return "M 0,170 L 600,170";
+    
+    const maxVal = Math.max(...trend, 1000);
+    const minVal = Math.min(...trend, 0);
+    const range = maxVal - minVal || 1;
+
+    const getY = (val: number) => {
+      const scaled = ((val - minVal) / range) * 140; // max height inside canvas 
+      return 170 - scaled;
+    };
+
+    let path = `M 0,${getY(trend[0])}`;
+    for (let i = 1; i < trend.length; i++) {
+      const x = i * 120;
+      const y = getY(trend[i]);
+      path += ` L ${x},${y}`;
+    }
+    return path;
+  };
+
+  // Helper to build the closed area for the glow gradient fill
+  const getFillPath = (trend: number[]) => {
+    const linePath = getSvgPath(trend);
+    return `${linePath} L 600,200 L 0,200 Z`;
+  };
+
+  const getPointY = (val: number, trend: number[]) => {
+    const maxVal = Math.max(...trend, 1000);
+    const minVal = Math.min(...trend, 0);
+    const range = maxVal - minVal || 1;
+    return 170 - ((val - minVal) / range) * 140;
+  };
+
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  // Dynamic Audit calculations
+  const discrepancy = Math.abs(stats.totalAssets - (stats.totalLiabilities + stats.totalEquity));
+  const isEquationBalanced = discrepancy < 0.01;
+  const complianceScore = isEquationBalanced ? 100 : Math.max(0, 100 - Math.round((discrepancy / (stats.totalAssets || 1)) * 100));
+
+  const monthLabels = getMonthLabels();
 
   return (
     <ClientLayout>
@@ -60,7 +124,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Financial Stat Cards (TailAdmin Grid Style) */}
+      {/* Financial Stat Cards (TailAdmin Grid Style with dynamic values) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         
         {/* Assets Card */}
@@ -69,14 +133,14 @@ export default function DashboardPage() {
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[11px] font-bold text-text-sub uppercase tracking-widest">Total Assets</span>
-              <div className="text-3xl font-extrabold text-text-main mt-2">$250,000.00</div>
+              <div className="text-3xl font-extrabold text-text-main mt-2">${formatCurrency(stats.totalAssets)}</div>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand group-hover:scale-110 transition-all duration-300">
               <TrendingUp className="h-5 w-5" />
             </div>
           </div>
           <div className="text-xs text-brand mt-3 font-medium flex items-center gap-1">
-            <span>+12.5%</span> <span className="text-text-sub">from last fiscal period</span>
+            <span>Dynamic</span> <span className="text-text-sub">calculated from posted accounts</span>
           </div>
         </div>
 
@@ -86,14 +150,14 @@ export default function DashboardPage() {
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[11px] font-bold text-text-sub uppercase tracking-widest">Total Liabilities</span>
-              <div className="text-3xl font-extrabold text-text-main mt-2">$120,000.00</div>
+              <div className="text-3xl font-extrabold text-text-main mt-2">${formatCurrency(stats.totalLiabilities)}</div>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-all duration-300">
               <Wallet className="h-5 w-5" />
             </div>
           </div>
           <div className="text-xs text-amber-500 mt-3 font-medium flex items-center gap-1">
-            <span>-3.2%</span> <span className="text-text-sub">accounts payable reduction</span>
+            <span>Dynamic</span> <span className="text-text-sub">ledger accounts payable</span>
           </div>
         </div>
 
@@ -103,44 +167,48 @@ export default function DashboardPage() {
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[11px] font-bold text-text-sub uppercase tracking-widest">Total Owner Equity</span>
-              <div className="text-3xl font-extrabold text-text-main mt-2">$130,000.00</div>
+              <div className="text-3xl font-extrabold text-text-main mt-2">${formatCurrency(stats.totalEquity)}</div>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand group-hover:scale-110 transition-all duration-300">
               <Scale className="h-5 w-5" />
             </div>
           </div>
           <div className="text-xs text-brand mt-3 font-medium flex items-center gap-1">
-            <span>+15.8%</span> <span className="text-text-sub">net worth accumulation</span>
+            <span>Dynamic</span> <span className="text-text-sub">capital + net income summary</span>
           </div>
         </div>
       </div>
 
-      {/* Balanced Ledger Equation Banner */}
+      {/* Balanced Ledger Equation Banner (Dynamic values) */}
       <div className="bg-bg-card/60 border border-border-main rounded-2xl p-6 flex flex-col md:flex-row items-center justify-around gap-6 mb-8 shadow-sm">
         <div className="flex flex-col items-center gap-1">
           <span className="text-xs font-bold text-text-sub uppercase tracking-wider">Total Assets</span>
-          <span className="text-2xl font-extrabold text-brand">$250,000.00</span>
+          <span className="text-2xl font-extrabold text-brand">${formatCurrency(stats.totalAssets)}</span>
         </div>
         <div className="text-text-sub/50 font-extralight text-3xl hidden md:block">=</div>
         <div className="flex flex-col items-center gap-1">
           <span className="text-xs font-bold text-text-sub uppercase tracking-wider">Total Liabilities</span>
-          <span className="text-2xl font-extrabold text-amber-500">$120,000.00</span>
+          <span className="text-2xl font-extrabold text-amber-500">${formatCurrency(stats.totalLiabilities)}</span>
         </div>
         <div className="text-text-sub/50 font-extralight text-3xl hidden md:block">+</div>
         <div className="flex flex-col items-center gap-1">
           <span className="text-xs font-bold text-text-sub uppercase tracking-wider">Total Owner Equity</span>
-          <span className="text-2xl font-extrabold text-brand">$130,000.00</span>
+          <span className="text-2xl font-extrabold text-brand">${formatCurrency(stats.totalEquity)}</span>
         </div>
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand/10 border border-brand/20 text-brand text-xs font-bold uppercase tracking-wider shrink-0 animate-pulse">
+        <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shrink-0 border ${
+          isEquationBalanced 
+            ? "bg-brand/10 border-brand/20 text-brand animate-pulse" 
+            : "bg-rose-500/10 border-rose-500/20 text-rose-500"
+        }`}>
           <Scale className="h-3.5 w-3.5" />
-          <span>Accounting Equation Balanced</span>
+          <span>{isEquationBalanced ? "Accounting Equation Balanced" : "Equation Out of Balance!"}</span>
         </div>
       </div>
 
-      {/* General Ledger Analytics Line Chart (Interactive SVG design) */}
+      {/* General Ledger Analytics Line Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
-        {/* SVG Chart Panel */}
+        {/* SVG Chart Panel (Fully dynamic paths) */}
         <div className="lg:col-span-2 bg-bg-card border border-border-main rounded-2xl p-6 shadow-lg flex flex-col justify-between">
           <div className="flex justify-between items-start mb-6">
             <div>
@@ -179,31 +247,47 @@ export default function DashboardPage() {
               <line x1="0" y1="160" x2="600" y2="160" stroke="var(--border)" strokeWidth="1" strokeDasharray="4 4" />
               
               {/* Asset Trend Curves */}
-              <path d="M 0,160 Q 120,130 240,110 T 480,80 T 600,60 L 600,200 L 0,200 Z" fill="url(#chartGlow)" />
-              <path d="M 0,160 Q 120,130 240,110 T 480,80 T 600,60" fill="none" stroke="var(--primary)" strokeWidth="2.5" />
+              <path d={getFillPath(stats.assetTrend)} fill="url(#chartGlow)" />
+              <path d={getSvgPath(stats.assetTrend)} fill="none" stroke="var(--primary)" strokeWidth="2.5" />
               
               {/* Equity Trend Curves */}
-              <path d="M 0,180 Q 120,160 240,150 T 480,120 T 600,110 L 600,200 L 0,200 Z" fill="url(#equityGlow)" />
-              <path d="M 0,180 Q 120,160 240,150 T 480,120 T 600,110" fill="none" stroke="var(--muted-foreground)" strokeWidth="2" strokeDasharray="2 2" />
+              <path d={getFillPath(stats.equityTrend)} fill="url(#equityGlow)" />
+              <path d={getSvgPath(stats.equityTrend)} fill="none" stroke="var(--muted-foreground)" strokeWidth="2" strokeDasharray="2 2" />
 
-              {/* Data points */}
-              <circle cx="240" cy="110" r="4.5" fill="var(--primary)" stroke="var(--card)" strokeWidth="2.5" />
-              <circle cx="480" cy="80" r="4.5" fill="var(--primary)" stroke="var(--card)" strokeWidth="2.5" />
-              <circle cx="240" cy="150" r="4" fill="var(--muted-foreground)" stroke="var(--card)" strokeWidth="2" />
+              {/* Dynamic data points */}
+              {stats.assetTrend.map((val, idx) => (
+                <circle 
+                  key={`asset-${idx}`} 
+                  cx={idx * 120} 
+                  cy={getPointY(val, stats.assetTrend)} 
+                  r="4.5" 
+                  fill="var(--primary)" 
+                  stroke="var(--card)" 
+                  strokeWidth="2.5" 
+                />
+              ))}
+              {stats.equityTrend.map((val, idx) => (
+                <circle 
+                  key={`equity-${idx}`} 
+                  cx={idx * 120} 
+                  cy={getPointY(val, stats.equityTrend)} 
+                  r="4" 
+                  fill="var(--muted-foreground)" 
+                  stroke="var(--card)" 
+                  strokeWidth="2" 
+                />
+              ))}
             </svg>
           </div>
 
           <div className="flex justify-between items-center text-[10px] text-text-sub font-bold uppercase tracking-widest mt-4">
-            <span>Jan</span>
-            <span>Feb</span>
-            <span>Mar</span>
-            <span>Apr</span>
-            <span>May</span>
-            <span>Jun</span>
+            {monthLabels.map((lbl, idx) => (
+              <span key={idx}>{lbl}</span>
+            ))}
           </div>
         </div>
 
-        {/* Double-Entry Compliance Audit Health gauge */}
+        {/* Double-Entry Compliance Audit Health gauge (Dynamic) */}
         <div className="bg-bg-card border border-border-main rounded-2xl p-6 shadow-lg flex flex-col justify-between">
           <div>
             <h3 className="text-base font-bold text-text-main">Compliance Health Check</h3>
@@ -214,11 +298,21 @@ export default function DashboardPage() {
             <div className="relative flex items-center justify-center">
               <svg className="w-32 h-32 transform -rotate-90">
                 <circle cx="64" cy="64" r="50" stroke="var(--border)" strokeWidth="8" fill="transparent" />
-                <circle cx="64" cy="64" r="50" stroke="var(--primary)" strokeWidth="8" fill="transparent" 
-                        strokeDasharray={314.16} strokeDashoffset={314.16 * 0.05} strokeLinecap="round" className="transition-all duration-500" />
+                <circle 
+                  cx="64" 
+                  cy="64" 
+                  r="50" 
+                  stroke={isEquationBalanced ? "var(--primary)" : "var(--destructive)"} 
+                  strokeWidth="8" 
+                  fill="transparent" 
+                  strokeDasharray={314.16} 
+                  strokeDashoffset={314.16 * (1 - complianceScore / 100)} 
+                  strokeLinecap="round" 
+                  className="transition-all duration-500" 
+                />
               </svg>
               <div className="absolute text-center">
-                <div className="text-2xl font-extrabold text-text-main">95%</div>
+                <div className="text-2xl font-extrabold text-text-main">{complianceScore}%</div>
                 <div className="text-[9px] font-bold text-text-sub uppercase tracking-widest">Score</div>
               </div>
             </div>
@@ -227,11 +321,13 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-2.5">
             <div className="flex justify-between text-xs font-semibold text-text-main">
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-brand"></span> Audited Invoices</span>
-              <span>{stats.invoicesCount} Passed</span>
+              <span>{stats.invoicesCount} Registered</span>
             </div>
             <div className="flex justify-between text-xs font-semibold text-text-main">
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> Balancing Check</span>
-              <span className="text-brand">0.00 Discrepancy</span>
+              <span className="flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${isEquationBalanced ? "bg-emerald-500" : "bg-rose-500"}`}></span> Balancing Check</span>
+              <span className={isEquationBalanced ? "text-brand" : "text-rose-500"}>
+                {isEquationBalanced ? "0.00 Balanced" : `${formatCurrency(discrepancy)} Discrepancy`}
+              </span>
             </div>
           </div>
         </div>

@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<IJournalEntryRepository, JournalEntryRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IOcrService, MockOcrService>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
         return services;
     }

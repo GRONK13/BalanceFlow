@@ -180,4 +180,20 @@ export const api = {
       });
     },
   },
+  dashboard: {
+    async getSummary(): Promise<{
+      totalAssets: number;
+      totalLiabilities: number;
+      totalEquity: number;
+      accountsCount: number;
+      journalEntriesCount: number;
+      invoicesCount: number;
+      recentEntries: any[];
+      recentInvoices: any[];
+      assetTrend: number[];
+      equityTrend: number[];
+    }> {
+      return request("/dashboard/summary");
+    },
+  },
 };
