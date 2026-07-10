@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BalanceFlow.UnitTests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a1b5863b89f034f1c5b635cc00d9b1ee8d3b6817")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b1aa93718f7ff4313d85f763970be81bc07a48dc")]
 [assembly: System.Reflection.AssemblyProductAttribute("BalanceFlow.UnitTests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BalanceFlow.UnitTests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
